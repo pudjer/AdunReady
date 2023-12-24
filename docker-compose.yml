@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  nginx:
+    build:
+      context: nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "9000:9000"
+    depends_on:
+      - elasticsearch
+    volumes:
+      - type: bind
+        source: ./app/dist
+        target: /usr/share/nginx/html
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.0
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+    volumes:
+      - type: bind
+        source: ./app/elastic
+        target: /usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+
+  setup:
+    build:
+      context: search
+      dockerfile: Dockerfile
+    depends_on:
+      - elasticsearch
+    restart: "no"
+    volumes:
+      - type: bind
+        source: ./app/setup/
+        target: /app/
+    
+  
